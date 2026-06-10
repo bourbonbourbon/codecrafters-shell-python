@@ -1,8 +1,10 @@
+import os
 import sys
 
 
 def main():
     _shell_builtins = ["echo", "exit", "type"]
+    _PATH = os.getenv("PATH")
     while True:
         sys.stdout.write("$ ")
         user_input = input()
@@ -18,9 +20,21 @@ def main():
             print(" ".join(args))
 
         elif command == "type":
+            command_found_in_path = False
             if args[0] in _shell_builtins:
                 print(f"{args[0]} is a shell builtin")
-            else:
+                continue
+
+            elif args[0] not in _shell_builtins:
+                for path_dir in _PATH.split(":"):
+                    exe_path = os.path.join(path_dir, args[0])
+                    if os.path.exists(exe_path):
+                        if os.access(exe_path, os.R_OK | os.X_OK):
+                            print(f"{args[0]} is {exe_path}")
+                            command_found_in_path = True
+                            break
+
+            if not command_found_in_path:
                 print(f"{args[0]}: not found")
 
         else:
