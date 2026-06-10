@@ -25,7 +25,8 @@ def args_preprocessor(args):
             c_list.append(ch)
             continue
 
-    args_list.append("".join(c_list))
+    if c_list:
+        args_list.append("".join(c_list))
 
     return args_list
 
@@ -105,9 +106,9 @@ def main():
         if command_found_in_path:
             try:
                 if args:
-                    subprocess.run([command], check=True)
-                else:
                     subprocess.run([command, *args], check=True)
+                else:
+                    subprocess.run([command], check=True)
             except subprocess.CalledProcessError:
                 pass
             continue
