@@ -21,7 +21,7 @@ def args_preprocessor(args):
                 c_list = []
             continue
 
-        if ch == "\\" and not in_double and not in_single:
+        if ch == "\\" and not in_single:
             escape_next = True
             continue
 
