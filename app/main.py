@@ -7,11 +7,22 @@ def args_preprocessor(args):
     in_double = False
     c_list = []
     args_list = []
+    escape_next = False
+
     for ch in args:
+        if escape_next:
+            escape_next = False
+            c_list.append(ch)
+            continue
+
         if ch.isspace() and not in_single and not in_double:
             if c_list:
                 args_list.append("".join(c_list))
                 c_list = []
+            continue
+
+        if ch == "\\":
+            escape_next = True
             continue
 
         if ch == "'" and not in_double:
