@@ -2,14 +2,17 @@ import os
 import sys
 import subprocess
 
-def args_preprocessor(args):
+def get_command_and_args(user_input):
+    command = ""
+    args_list = []
+
     in_single = False
     in_double = False
-    c_list = []
-    args_list = []
     escape_next = False
+    c_list = []
 
-    for ch in args:
+    for i, ch in enumerate(user_input):
+        # print(user_input)
         if escape_next:
             escape_next = False
             c_list.append(ch)
@@ -17,7 +20,11 @@ def args_preprocessor(args):
 
         if ch.isspace() and not in_single and not in_double:
             if c_list:
-                args_list.append("".join(c_list))
+                if command == "":
+                    command = "".join(c_list)
+                    user_input = user_input[i + 1:]
+                else:
+                    args_list.append("".join(c_list))
                 c_list = []
             continue
 
@@ -47,9 +54,12 @@ def args_preprocessor(args):
 
     # for the last or only arg
     if c_list:
-        args_list.append("".join(c_list))
+        if command == "":
+            command = "".join(c_list)
+        else:
+            args_list.append("".join(c_list))
 
-    return args_list
+    return command, args_list
 
 
 def main():
@@ -63,10 +73,7 @@ def main():
         if user_input == "":
             continue
 
-        command = user_input.split()[0]
-        args = " ".join(user_input.split(None, 1)[1:])
-
-        args = args_preprocessor(args)
+        command, args = get_command_and_args(user_input)
 
         if command == "exit":
             sys.exit(0)
