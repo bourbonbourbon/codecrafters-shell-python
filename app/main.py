@@ -32,7 +32,7 @@ def main():
                 for path_dir in _path.split(":"):
                     exe_path = os.path.join(path_dir, args[0])
                     if os.path.exists(exe_path):
-                        if os.access(exe_path, os.R_OK & os.X_OK):
+                        if os.access(exe_path, os.R_OK | os.X_OK):
                             print(f"{args[0]} is {exe_path}")
                             command_found_in_path = True
                             break
@@ -46,7 +46,7 @@ def main():
         for path_dir in _path.split(":"):
             exe_path = os.path.join(path_dir, command)
             if os.path.exists(exe_path):
-                if os.access(exe_path, os.R_OK & os.X_OK):
+                if os.access(exe_path, os.R_OK | os.X_OK):
                     command_found_in_path = True
                     break
 
