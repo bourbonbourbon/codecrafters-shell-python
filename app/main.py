@@ -4,7 +4,7 @@ import subprocess
 
 
 def main():
-    _shell_builtins = ["echo", "exit", "type"]
+    _shell_builtins = ["echo", "exit", "type", "pwd"]
     _path = os.getenv("PATH")
 
     while True:
@@ -40,6 +40,10 @@ def main():
             if not command_found_in_path:
                 print(f"{args[0]}: not found")
 
+            continue
+
+        elif command == "pwd":
+            print(os.getcwd())
             continue
 
         command_found_in_path = False
