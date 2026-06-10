@@ -4,20 +4,25 @@ import subprocess
 
 def args_preprocessor(args):
     in_single = False
+    in_double = False
     c_list = []
     args_list = []
     for ch in args:
-        if ch.isspace() and not in_single:
+        if ch.isspace() and not in_single and not in_double:
             if c_list:
                 args_list.append("".join(c_list))
                 c_list = []
             continue
 
-        if ch == "'":
+        if ch == "'" and not in_double:
             in_single = not in_single
             continue
 
-        if ch != "'" and in_single:
+        if ch == "\"" and not in_single:
+            in_double = not in_double
+            continue
+
+        if ch != "'" or ch != "\"" and in_single or in_double:
             c_list.append(ch)
             continue
 
@@ -25,6 +30,11 @@ def args_preprocessor(args):
             c_list.append(ch)
             continue
 
+        if not in_double:
+            c_list.append(ch)
+            continue
+
+    # for the last or only arg
     if c_list:
         args_list.append("".join(c_list))
 
