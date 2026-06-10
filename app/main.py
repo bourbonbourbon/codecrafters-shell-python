@@ -3,28 +3,31 @@ import sys
 import subprocess
 
 def args_preprocessor(args):
-    args_stack = []
-    q_stack = []
-    char_stack = []
-    q_stack_len = 0
-    for c in args:
-        if c == "'":
-            if q_stack_len != 0:
-                item = q_stack.pop()
-                if item and c == "'":
-                    q_stack_len -= 1
-                    args_stack.append("".join(char_stack).strip())
-                    char_stack = []
-                else:
-                    q_stack.append(item)
-            else:
-                q_stack.append(c)
-                q_stack_len += 1
-        else:
-            char_stack.append(c)
+    in_single = False
+    c_list = []
+    args_list = []
+    for ch in args:
+        if ch.isspace() and not in_single:
+            if c_list:
+                args_list.append("".join(c_list))
+                c_list = []
+            continue
 
-    return args_stack
+        if ch == "'":
+            in_single = not in_single
+            continue
 
+        if ch != "'" and in_single:
+            c_list.append(ch)
+            continue
+
+        if not in_single:
+            c_list.append(ch)
+            continue
+
+    args_list.append("".join(c_list))
+
+    return args_list
 
 
 def main():
@@ -35,8 +38,11 @@ def main():
         sys.stdout.write("$ ")
         user_input = input()
 
+        if user_input == "":
+            continue
+
         command = user_input.split()[0]
-        args = user_input.removeprefix(command + " ")
+        args = " ".join(user_input.split(None, 1)[1:])
 
         args = args_preprocessor(args)
 
@@ -44,7 +50,8 @@ def main():
             sys.exit(0)
 
         elif command == "echo":
-            print(" ".join(args))
+            if args:
+                print(" ".join(args))
             continue
 
         elif command == "pwd":
@@ -52,6 +59,7 @@ def main():
             continue
 
         elif command == "cd":
+            print(command)
             try:
                 if args[0] == "~":
                     os.chdir(os.getenv("HOME"))
@@ -64,6 +72,9 @@ def main():
 
         elif command == "type":
             command_found_in_path = False
+
+            if not args:
+                continue
 
             if args[0] in _shell_builtins:
                 print(f"{args[0]} is a shell builtin")
@@ -93,7 +104,10 @@ def main():
 
         if command_found_in_path:
             try:
-                subprocess.run([command, *args], check=True)
+                if args:
+                    subprocess.run([command], check=True)
+                else:
+                    subprocess.run([command, *args], check=True)
             except subprocess.CalledProcessError:
                 pass
             continue
