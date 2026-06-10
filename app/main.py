@@ -60,7 +60,6 @@ def main():
             continue
 
         elif command == "cd":
-            print(command)
             try:
                 if args[0] == "~":
                     os.chdir(os.getenv("HOME"))
