@@ -4,7 +4,7 @@ import subprocess
 
 
 def main():
-    _shell_builtins = ["echo", "exit", "type", "pwd"]
+    _shell_builtins = ["echo", "exit", "type", "pwd", "cd"]
     _path = os.getenv("PATH")
 
     while True:
@@ -19,6 +19,18 @@ def main():
 
         elif command == "echo":
             print(" ".join(args))
+            continue
+
+        elif command == "pwd":
+            print(os.getcwd())
+            continue
+
+        elif command == "cd":
+            try:
+                os.chdir(args[0])
+            except (FileNotFoundError, PermissionError, NotADirectoryError):
+                print(f"cd: {args[0]}: No such file or directory")
+
             continue
 
         elif command == "type":
@@ -40,10 +52,6 @@ def main():
             if not command_found_in_path:
                 print(f"{args[0]}: not found")
 
-            continue
-
-        elif command == "pwd":
-            print(os.getcwd())
             continue
 
         command_found_in_path = False
