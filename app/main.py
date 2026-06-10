@@ -2,9 +2,33 @@ import os
 import sys
 import subprocess
 
+def args_preprocessor(args):
+    args_stack = []
+    q_stack = []
+    char_stack = []
+    q_stack_len = 0
+    for c in args:
+        if c == "'":
+            if q_stack_len != 0:
+                item = q_stack.pop()
+                if item and c == "'":
+                    q_stack_len -= 1
+                    args_stack.append("".join(char_stack).strip())
+                    char_stack = []
+                else:
+                    q_stack.append(item)
+            else:
+                q_stack.append(c)
+                q_stack_len += 1
+        else:
+            char_stack.append(c)
+
+    return args_stack
+
+
 
 def main():
-    _shell_builtins = ["echo", "exit", "type", "pwd", "cd"]
+    _shell_builtins: list[str] = ["echo", "exit", "type", "pwd", "cd"]
     _path = os.getenv("PATH")
 
     while True:
@@ -12,7 +36,9 @@ def main():
         user_input = input()
 
         command = user_input.split()[0]
-        args = user_input.split()[1:]
+        args = user_input.removeprefix(command + " ")
+
+        args = args_preprocessor(args)
 
         if command == "exit":
             sys.exit(0)
