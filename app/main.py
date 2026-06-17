@@ -108,8 +108,6 @@ def main():
         except PermissionError:
             pass
 
-        print(stdout_redirect_file)
-
         command, args = get_command_and_args(user_input)
 
 
