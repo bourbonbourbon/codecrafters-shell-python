@@ -1,7 +1,7 @@
 import os
 import re
 import sys
-import typing
+# import typing
 import subprocess
 
 def get_command_and_args(user_input):
@@ -63,33 +63,43 @@ def get_command_and_args(user_input):
 
     return command, args_list
 
-def preprocess_redirection(user_input):
-    command = re.split(" 1> | > ", user_input)
-
-    if len(command) < 2:
-        return command[0], ""
-
-    if not os.path.exists(os.path.abspath(command[1])):
+def create_file(file):
+    if not os.path.exists(os.path.abspath(file)):
         try:
-            fp = open(os.path.abspath(command[1]), "w", encoding="UTF-8")
+            fp = open(os.path.abspath(file), "w", encoding="UTF-8")
         except PermissionError:
             pass
         else:
             with fp:
                 pass
 
-    return command[0], os.path.abspath(command[1])
+    return os.path.abspath(file)
+
+def preprocess_write_redirection(user_input):
+    c1 = re.split(" 2> ", user_input)
+    c2 = re.split(" 1> | > ", user_input)
+
+    if len(c1) < 2 and len(c2) < 2:
+        return user_input, "", ""
+
+    if len(c1) > 1 and len(c2) < 2:
+        return c1[0], "", create_file(c1[1])
+
+    if len(c1) < 2 and len(c2) > 1:
+        return c2[0], create_file(c2[1]), ""
+
+    # if both do? then?
 
 
-def send_stdout_redirection(stdout_redirect_file, stdout):
-    if stdout_redirect_file != "":
+def write_redirection(redirect_file, message):
+    if redirect_file != "":
         try:
-            fp = open(stdout_redirect_file, "w", encoding="UTF-8")
+            fp = open(redirect_file, "w", encoding="UTF-8")
         except PermissionError:
             pass
         else:
             with fp:
-                fp.write(stdout)
+                fp.write(message)
 
 
 def main():
@@ -104,14 +114,11 @@ def main():
             continue
 
         try:
-            user_input, stdout_redirect_file = preprocess_redirection(user_input)
+            user_input, stdout_redirect_file, stderr_redirect_file = preprocess_write_redirection(user_input)
         except PermissionError:
             pass
 
         command, args = get_command_and_args(user_input)
-
-
-        # command redirection for shell internals as well
 
         if command == "exit":
             sys.exit(0)
@@ -120,13 +127,13 @@ def main():
             if args:
                 if stdout_redirect_file == "":
                     print(" ".join(args))
-            send_stdout_redirection(stdout_redirect_file, " ".join(args))
+            write_redirection(stdout_redirect_file, " ".join(args))
             continue
 
         elif command == "pwd":
             if stdout_redirect_file == "":
                 print(os.getcwd())
-            send_stdout_redirection(stdout_redirect_file, os.getcwd())
+            write_redirection(stdout_redirect_file, os.getcwd())
             continue
 
         elif command == "cd":
@@ -137,6 +144,7 @@ def main():
                     os.chdir(args[0])
             except (FileNotFoundError, PermissionError, NotADirectoryError):
                 print(f"cd: {args[0]}: No such file or directory")
+                write_redirection(stderr_redirect_file, f"cd: {args[0]}: No such file or directory")
 
             continue
 
@@ -149,7 +157,7 @@ def main():
             if args[0] in _shell_builtins:
                 if stdout_redirect_file == "":
                     print(f"{args[0]} is a shell builtin")
-                send_stdout_redirection(stdout_redirect_file, f"{args[0]} is a shell builtin")
+                write_redirection(stdout_redirect_file, f"{args[0]} is a shell builtin")
                 continue
 
             elif args[0] not in _shell_builtins:
@@ -159,13 +167,13 @@ def main():
                         if os.access(exe_path, os.R_OK | os.X_OK):
                             if stdout_redirect_file == "":
                                 print(f"{args[0]} is {exe_path}")
-                            send_stdout_redirection(stdout_redirect_file, f"{args[0]} is {exe_path}")
+                            write_redirection(stdout_redirect_file, f"{args[0]} is {exe_path}")
                             command_found_in_path = True
                             break
 
             if not command_found_in_path:
                 print(f"{args[0]}: not found")
-                send_stdout_redirection(stdout_redirect_file, f"{args[0]}: not found")
+                write_redirection(stdout_redirect_file, f"{args[0]}: not found")
 
             continue
 
@@ -178,8 +186,6 @@ def main():
                     break
 
         if command_found_in_path:
-            # print(command, args)
-            # print(stdout_redirect_file)
             if args:
                 p = subprocess.run([command, *args], check=False, capture_output=True)
             else:
@@ -188,9 +194,11 @@ def main():
             if p.stdout.decode().rstrip() != "":
                 if stdout_redirect_file == "":
                     print(p.stdout.decode().rstrip())
+                write_redirection(stdout_redirect_file, p.stdout.decode())
             if  p.stderr.decode().rstrip() != "":
-                print(p.stderr.decode().rstrip())
-            send_stdout_redirection(stdout_redirect_file, p.stdout.decode())
+                if stderr_redirect_file == "":
+                    print(p.stderr.decode().rstrip())
+                write_redirection(stderr_redirect_file, p.stderr.decode())
 
             continue
 
