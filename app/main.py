@@ -186,7 +186,8 @@ def main():
 
                 if stdout_redirect_file == "":
                     print(p.stdout.decode().rstrip())
-                print(p.stderr.decode().rstrip())
+                if p.stderr.decode.rstrip() != "":
+                    print(p.stderr.decode().rstrip())
                 send_stdout_redirection(stdout_redirect_file, p.stdout.decode())
             except subprocess.CalledProcessError:
                 pass
