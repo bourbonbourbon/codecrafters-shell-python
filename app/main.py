@@ -178,18 +178,17 @@ def main():
                     break
 
         if command_found_in_path:
+            # print(command, args)
+            # print(stdout_redirect_file)
             if args:
                 p = subprocess.run([command, *args], check=False, capture_output=True)
             else:
                 p = subprocess.run([command], check=False, capture_output=True)
 
-            # print(p.stdout.decode())
-            # print(p.stderr.decode())
-            if stdout_redirect_file == "":
-                if p.stdout.decode().rstrip() != "":
-                    print(p.stdout.decode().rstrip())
-                if  p.stderr.decode().rstrip() != "":
-                    print(p.stderr.decode().rstrip())
+            if p.stdout.decode().rstrip() != "":
+                print(p.stdout.decode(), end="")
+            if  p.stderr.decode().rstrip() != "":
+                print(p.stderr.decode(), end="")
             send_stdout_redirection(stdout_redirect_file, p.stdout.decode())
 
             continue
