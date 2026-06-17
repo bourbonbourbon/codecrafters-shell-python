@@ -185,7 +185,7 @@ def main():
                     p = subprocess.run([command], check=True, capture_output=True)
 
                 if stdout_redirect_file == "":
-                    print(p.stdout.decode(), end="")
+                    print(p.stdout.decode())
                 send_stdout_redirection(stdout_redirect_file, p.stdout.decode())
             except subprocess.CalledProcessError:
                 pass
