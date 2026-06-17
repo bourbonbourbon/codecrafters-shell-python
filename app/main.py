@@ -1,5 +1,7 @@
 import os
+import re
 import sys
+import typing
 import subprocess
 
 def get_command_and_args(user_input):
@@ -12,7 +14,7 @@ def get_command_and_args(user_input):
     c_list = []
 
     for i, ch in enumerate(user_input):
-        # print(user_input)
+
         if escape_next:
             escape_next = False
             c_list.append(ch)
@@ -61,6 +63,34 @@ def get_command_and_args(user_input):
 
     return command, args_list
 
+def preprocess_redirection(user_input):
+    command = re.split(" 1> | > ", user_input)
+
+    if len(command) < 2:
+        return command[0], ""
+
+    if not os.path.exists(os.path.abspath(command[1])):
+        try:
+            fp = open(os.path.abspath(command[1]), "w", encoding="UTF-8")
+        except PermissionError:
+            pass
+        else:
+            with fp:
+                pass
+
+    return command[0], os.path.abspath(command[1])
+
+
+def send_stdout_redirection(stdout_redirect_file, stdout):
+    if stdout_redirect_file != "":
+        try:
+            fp = open(stdout_redirect_file, "w", encoding="UTF-8")
+        except PermissionError:
+            pass
+        else:
+            with fp:
+                fp.write(stdout)
+
 
 def main():
     _shell_builtins: list[str] = ["echo", "exit", "type", "pwd", "cd"]
@@ -73,7 +103,17 @@ def main():
         if user_input == "":
             continue
 
+        try:
+            user_input, stdout_redirect_file = preprocess_redirection(user_input)
+        except PermissionError:
+            pass
+
+        print(stdout_redirect_file)
+
         command, args = get_command_and_args(user_input)
+
+
+        # command redirection for shell internals as well
 
         if command == "exit":
             sys.exit(0)
@@ -81,10 +121,12 @@ def main():
         elif command == "echo":
             if args:
                 print(" ".join(args))
+            send_stdout_redirection(stdout_redirect_file, " ".join(args))
             continue
 
         elif command == "pwd":
             print(os.getcwd())
+            send_stdout_redirection(stdout_redirect_file, os.getcwd())
             continue
 
         elif command == "cd":
@@ -106,6 +148,7 @@ def main():
 
             if args[0] in _shell_builtins:
                 print(f"{args[0]} is a shell builtin")
+                send_stdout_redirection(stdout_redirect_file, f"{args[0]} is a shell builtin")
                 continue
 
             elif args[0] not in _shell_builtins:
@@ -114,11 +157,13 @@ def main():
                     if os.path.exists(exe_path):
                         if os.access(exe_path, os.R_OK | os.X_OK):
                             print(f"{args[0]} is {exe_path}")
+                            send_stdout_redirection(stdout_redirect_file, f"{args[0]} is {exe_path}")
                             command_found_in_path = True
                             break
 
             if not command_found_in_path:
                 print(f"{args[0]}: not found")
+                send_stdout_redirection(stdout_redirect_file, f"{args[0]}: not found")
 
             continue
 
@@ -133,11 +178,15 @@ def main():
         if command_found_in_path:
             try:
                 if args:
-                    subprocess.run([command, *args], check=True)
+                    p = subprocess.run([command, *args], check=True, capture_output=True)
                 else:
-                    subprocess.run([command], check=True)
+                    p = subprocess.run([command], check=True, capture_output=True)
+
+                print(p.stdout.decode(), end="")
+                send_stdout_redirection(stdout_redirect_file, p.stdout.decode())
             except subprocess.CalledProcessError:
                 pass
+
             continue
 
         print(f"{command}: command not found")
