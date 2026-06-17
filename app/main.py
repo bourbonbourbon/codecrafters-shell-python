@@ -118,15 +118,15 @@ def main():
 
         elif command == "echo":
             if args:
-                print(" ".join(args))
-            if stdout_redirect_file == "":
-                send_stdout_redirection(stdout_redirect_file, " ".join(args))
+                if stdout_redirect_file == "":
+                    print(" ".join(args))
+            send_stdout_redirection(stdout_redirect_file, " ".join(args))
             continue
 
         elif command == "pwd":
-            print(os.getcwd())
             if stdout_redirect_file == "":
-                send_stdout_redirection(stdout_redirect_file, os.getcwd())
+                print(os.getcwd())
+            send_stdout_redirection(stdout_redirect_file, os.getcwd())
             continue
 
         elif command == "cd":
@@ -147,9 +147,9 @@ def main():
                 continue
 
             if args[0] in _shell_builtins:
-                print(f"{args[0]} is a shell builtin")
                 if stdout_redirect_file == "":
-                    send_stdout_redirection(stdout_redirect_file, f"{args[0]} is a shell builtin")
+                    print(f"{args[0]} is a shell builtin")
+                send_stdout_redirection(stdout_redirect_file, f"{args[0]} is a shell builtin")
                 continue
 
             elif args[0] not in _shell_builtins:
@@ -157,16 +157,15 @@ def main():
                     exe_path = os.path.join(path_dir, args[0])
                     if os.path.exists(exe_path):
                         if os.access(exe_path, os.R_OK | os.X_OK):
-                            print(f"{args[0]} is {exe_path}")
                             if stdout_redirect_file == "":
-                                send_stdout_redirection(stdout_redirect_file, f"{args[0]} is {exe_path}")
+                                print(f"{args[0]} is {exe_path}")
+                            send_stdout_redirection(stdout_redirect_file, f"{args[0]} is {exe_path}")
                             command_found_in_path = True
                             break
 
             if not command_found_in_path:
                 print(f"{args[0]}: not found")
-                if stdout_redirect_file == "":
-                    send_stdout_redirection(stdout_redirect_file, f"{args[0]}: not found")
+                send_stdout_redirection(stdout_redirect_file, f"{args[0]}: not found")
 
             continue
 
