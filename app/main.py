@@ -186,7 +186,7 @@ def main():
                 p = subprocess.run([command], check=False, capture_output=True)
 
             if p.stdout.decode().rstrip() != "":
-                if stdout_redirect_file != "":
+                if stdout_redirect_file == "":
                     print(p.stdout.decode(), end="")
             if  p.stderr.decode().rstrip() != "":
                 print(p.stderr.decode(), end="")
