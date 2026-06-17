@@ -187,9 +187,9 @@ def main():
 
             if p.stdout.decode().rstrip() != "":
                 if stdout_redirect_file == "":
-                    print(p.stdout.decode(), end="")
+                    print(p.stdout.decode().rstrip())
             if  p.stderr.decode().rstrip() != "":
-                print(p.stderr.decode(), end="")
+                print(p.stderr.decode().rstrip())
             send_stdout_redirection(stdout_redirect_file, p.stdout.decode())
 
             continue
